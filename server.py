@@ -1,5 +1,10 @@
-#  coding: utf-8 
+#  coding: utf-8
+import config as cfg
+import logging
 import socketserver
+
+# Global variables
+logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cfg.LOG_DATEFMT, level=cfg.LOG_LEVEL)
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -40,6 +45,7 @@ if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
+    logging.info('Started')
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
