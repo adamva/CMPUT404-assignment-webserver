@@ -40,12 +40,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.request.sendall(bytearray("OK",'utf-8'))
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 8080
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
-    server = socketserver.TCPServer((HOST, PORT), MyWebServer)
-    logging.info('Started')
+    server = socketserver.TCPServer((cfg.BIND_HOST, cfg.BIND_PORT), MyWebServer)
+    logging.info(f'Started webserver at host: {cfg.BIND_HOST} port: {cfg.BIND_PORT}')
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
