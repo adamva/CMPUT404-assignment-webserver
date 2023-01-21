@@ -35,9 +35,10 @@ logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cf
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        self.req_ip, self.req_port = self.request.getpeername()
+        self.req_data = self.request.recv(cfg.BUFFER_SIZE).strip()
+        logging.info("Incoming request host: %s\n", self.req_ip)
+        self.request.sendall(bytearray("HTTP/1.1 200 OK\n\n",'utf-8'))
 
 if __name__ == "__main__":
 
