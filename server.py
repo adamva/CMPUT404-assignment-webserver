@@ -49,12 +49,21 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         # Bounce large requests HTTP 400
         if len(raw_data) > cfg.REQUEST_MAX_SIZE:
-            logging.info("400 Bad Request for host: %s request too large\n")
+            logging.error("400 Bad Request for host: %s request too large\n")
             self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\n\n",'utf-8'))
         else:
-            logging.info(f"Parsing request size {len(raw_data)}")
             self.req_data = httpRequestParser.parse(raw_data.decode())
-            # logging.info(self.req_data)
+            # Log result of request
+            RESPONSE = '200'
+            logging.info("%s %s %s %s %s %s %s",
+                self.req_data.get('method', '-'), 
+                self.req_data.get('path', '-'), 
+                self.req_data.get('version', '-'), 
+                RESPONSE, 
+                self.req_data.get('Content-Length', '-'), 
+                self.req_ip, 
+                self.req_data.get('User-Agent', '-'))
+            
             self.request.sendall(bytearray("HTTP/1.1 200 OK\n\n",'utf-8'))
 
 if __name__ == "__main__":
