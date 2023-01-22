@@ -50,13 +50,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def send_response(self):
         # HTTP Response example: b'HTTP/1.1 200 OK\n\n'
         # print(self.rsp_data) # XX
-        http_status_code = self.rsp_data['status_code']
+        http_status_code = self.rsp_data.get('status_code', '500')
         http_status_code_eng = HTTP_CODE[http_status_code]
         # Construct status line
         http_rsp = b'' + self.rsp_data['version'].encode() + b' ' + http_status_code.encode() + b' ' + http_status_code_eng.encode() + b'\n'
         # Construct headers
         for header in self.rsp_data['headers']:
-            http_rsp += header.encode() + b' ' + self.rsp_data['headers'][header].encode() + b'\n'
+            http_rsp += header.encode() + b': ' + self.rsp_data['headers'][header].encode() + b'\n'
         http_rsp += b'\n'
         # Append message body
         if self.rsp_data['message_body']:
