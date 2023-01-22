@@ -5,9 +5,17 @@ import socketserver
 # Local files
 import config as cfg
 import httpRequestParser
+import router
 
 # Global variables
 logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cfg.LOG_DATEFMT, level=cfg.LOG_LEVEL)
+HTTP_CODE = {
+    '200': 'OK'
+    '301': 'Moved Permanently'
+    '400': 'Bad Request'
+    '404': 'Not Found'
+    '405': 'Method Not Allowed'
+}
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # Copyright 2023 Adam Ahmed
@@ -41,7 +49,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         # Get client request IP & port
         self.req_ip, self.req_port = self.request.getpeername()
-        logging.info("Incoming request host: %s", self.req_ip)
+        logging.info("Connected client at host: %s", self.req_ip)
 
         # Read HTTP request
         # TODO Ask about reading all data, the while True if not data break results in a hang
@@ -53,13 +61,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\n\n",'utf-8'))
         else:
             self.req_data = httpRequestParser.parse(raw_data.decode())
-            # Log result of request
-            RESPONSE = '200'
+            # Route request
+            self.rsp_data = {}
+            self.rsp_data['status_code'] = router.route(self.req_data['path'])
+            # Serve request
+            # Log result of serve
             logging.info("%s %s %s %s %s %s %s",
                 self.req_data.get('method', '-'), 
                 self.req_data.get('path', '-'), 
                 self.req_data.get('version', '-'), 
-                RESPONSE, 
+                self.rsp_data.get('status_code', '-'), 
                 self.req_data.get('Content-Length', '-'), 
                 self.req_ip, 
                 self.req_data.get('User-Agent', '-'))
