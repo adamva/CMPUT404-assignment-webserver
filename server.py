@@ -10,11 +10,12 @@ import router
 # Global variables
 logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cfg.LOG_DATEFMT, level=cfg.LOG_LEVEL)
 HTTP_CODE = {
-    '200': 'OK'
-    '301': 'Moved Permanently'
-    '400': 'Bad Request'
-    '404': 'Not Found'
-    '405': 'Method Not Allowed'
+    '200': 'OK',
+    '301': 'Moved Permanently',
+    '400': 'Bad Request',
+    '404': 'Not Found',
+    '405': 'Method Not Allowed',
+    '500': 'Internal Server Error'
 }
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
@@ -46,6 +47,23 @@ HTTP_CODE = {
 
 class MyWebServer(socketserver.BaseRequestHandler):
     
+    def send_response(self):
+        # HTTP Response example: b'HTTP/1.1 200 OK\n\n'
+        # print(self.rsp_data) # XX
+        http_status_code = self.rsp_data['status_code']
+        http_status_code_eng = HTTP_CODE[http_status_code]
+        # Construct response status line
+        http_rsp = b'' + self.rsp_data['version'].encode() + b' ' + http_status_code.encode() + b' ' + http_status_code_eng.encode() + b'\n'
+        # Construct response headers
+        for header in self.rsp_data['headers']:
+            http_rsp += header.encode() + b' ' + self.rsp_data['headers'][header].encode() + b'\n'
+        http_rsp += b'\n'
+        # Append response message body
+        if self.rsp_data['message_body']:
+            http_rsp += self.rsp_data['message_body'].encode()
+            
+        self.request.sendall(http_rsp)
+
     def handle(self):
         # Get client request IP & port
         self.req_ip, self.req_port = self.request.getpeername()
@@ -55,27 +73,29 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # TODO Ask about reading all data, the while True if not data break results in a hang
         raw_data = self.request.recv(cfg.BUFFER_SIZE).strip()
 
+        self.rsp_data = {}
         # Bounce large requests HTTP 400
         if len(raw_data) > cfg.REQUEST_MAX_SIZE:
             logging.error("400 Bad Request for host: %s request too large\n")
-            self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\n\n",'utf-8'))
+            self.rsp_data['status_code'] = '400'
         else:
             self.req_data = httpRequestParser.parse(raw_data.decode())
             # Route request
-            self.rsp_data = {}
-            self.rsp_data['status_code'] = router.route(self.req_data['path'])
+            self.rsp_data = router.serve(cfg.WEB_ADDRESS, self.req_data)
             # Serve request
             # Log result of serve
-            logging.info("%s %s %s %s %s %s %s",
-                self.req_data.get('method', '-'), 
-                self.req_data.get('path', '-'), 
-                self.req_data.get('version', '-'), 
-                self.rsp_data.get('status_code', '-'), 
-                self.req_data.get('Content-Length', '-'), 
-                self.req_ip, 
-                self.req_data.get('User-Agent', '-'))
-            
-            self.request.sendall(bytearray("HTTP/1.1 200 OK\n\n",'utf-8'))
+            if self.rsp_data['status_code'] != '400':
+                logging.info("%s %s %s %s %s %s %s",
+                    self.req_data.get('method', '-'), 
+                    self.req_data.get('path', '-'), 
+                    self.req_data.get('version', '-'), 
+                    self.rsp_data.get('status_code', '-'), 
+                    self.req_data.get('Content-Length', '-'), 
+                    self.req_ip, 
+                    self.req_data.get('User-Agent', '-'))
+        
+        # Send response
+        self.send_response()
 
 if __name__ == "__main__":
 

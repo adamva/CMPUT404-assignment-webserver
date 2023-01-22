@@ -25,6 +25,9 @@ LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
 # Webserver
 BIND_HOST = 'localhost'
 BIND_PORT = 8080
+WEB_SCHEME = 'http'
+WEB_ADDRESS = f'{WEB_SCHEME}://{BIND_HOST}:{BIND_PORT}'
+SERVER_ROOT_FOLDER = './www'
 
 BUFFER_SIZE = 1024
 REQUEST_MAX_SIZE = 2000000 # 2MB

@@ -1,5 +1,6 @@
 import logging
 import re
+import os
 
 # Copyright 2023 Adam Ahmed
 # 
@@ -23,21 +24,36 @@ def route(path):
     http_code = '400'
     # Deny bad paths
     if filter(path):
-        logging.error("Malformed request path received")
-        return '400'
+        logging.error('Malformed request path received')
+        return ('400', path)
     
-    # # Only serve known web file types
-    # valid_file_extension = ('/', '.html', '.css')
-    # if not path.endswith(valid_file_extension):
-    #     logging.error("Unknown file type")
-    #     return 404
-    
+    # Append path ending & redirect
+    valid_file_extensions = ('.html', '.css')
+    if not path.endswith('/'):
+        if not path.endswith(valid_file_extensions):
+            return ('301', path+'/')
+            
     # Route known paths else return 404 Not Found
-    if path == '/':
-        http_code = '200'
-    elif path == '/deep/':
+    if re.search(r'/[a-z0-9.-/]*$', path, re.I):
         http_code = '200'
     else:
-        logging.error("Unknown path %s", path)
+        logging.error('Unknown path %s', path)
         http_code = '404'
-    return http_code
+    return (http_code, path)
+
+def get_content(path):
+    return ('200', 'WOO')
+
+def serve(web_addr, req_data):
+    rsp_data = {'headers':{}}
+    rsp_data['status_code'], rsp_data['path'] = route(req_data['path'])
+    rsp_data['version'] = req_data.get('version', 'HTTP/1.0')
+    rsp_data['message_body'] = ''
+
+    match rsp_data.get('status_code', '500'):
+        case '200':
+            rsp_data['status_code'], rsp_data['message_body'] = get_content(req_data['path'])
+        case '301':
+            rsp_data['headers']['Location'] = web_addr + rsp_data['path']
+    return rsp_data
+
