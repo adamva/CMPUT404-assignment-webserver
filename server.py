@@ -1,7 +1,10 @@
 #  coding: utf-8
-import config as cfg
+# Native libraries
 import logging
 import socketserver
+# Local files
+import config as cfg
+import httpRequestParser
 
 # Global variables
 logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cfg.LOG_DATEFMT, level=cfg.LOG_LEVEL)
@@ -35,10 +38,23 @@ logging.basicConfig(filename=cfg.LOG_FILENAME, format=cfg.LOG_FORMAT, datefmt=cf
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
+        # Get client request IP & port
         self.req_ip, self.req_port = self.request.getpeername()
-        self.req_data = self.request.recv(cfg.BUFFER_SIZE).strip()
-        logging.info("Incoming request host: %s\n", self.req_ip)
-        self.request.sendall(bytearray("HTTP/1.1 200 OK\n\n",'utf-8'))
+        logging.info("Incoming request host: %s", self.req_ip)
+
+        # Read HTTP request
+        # TODO Ask about reading all data, the while True if not data break results in a hang
+        raw_data = self.request.recv(cfg.BUFFER_SIZE).strip()
+
+        # Bounce large requests HTTP 400
+        if len(raw_data) > cfg.REQUEST_MAX_SIZE:
+            logging.info("400 Bad Request for host: %s request too large\n")
+            self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\n\n",'utf-8'))
+        else:
+            logging.info(f"Parsing request size {len(raw_data)}")
+            self.req_data = httpRequestParser.parse(raw_data.decode())
+            # logging.info(self.req_data)
+            self.request.sendall(bytearray("HTTP/1.1 200 OK\n\n",'utf-8'))
 
 if __name__ == "__main__":
 
