@@ -51,7 +51,7 @@ def get_content(root_folder, path):
     req_file = path+'index.html' if path.endswith('/') else path
     req_file_path = root_folder+req_file
     if os.path.isfile(req_file_path):
-        logger.debug(f'Getting content for {req_file_path}')
+        logging.debug(f'Getting content for {req_file_path}')
         req_file_content = open(req_file_path).read()
         http_code = '200'
     else:
