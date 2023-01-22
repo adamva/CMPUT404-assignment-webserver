@@ -49,7 +49,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def send_response(self):
         # HTTP Response example: b'HTTP/1.1 200 OK\n\n'
-        # print(self.rsp_data) # XX
         http_status_code = self.rsp_data.get('status_code', '500')
         http_status_code_eng = HTTP_CODE[http_status_code]
         # Construct status line
@@ -80,8 +79,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.rsp_data['status_code'] = '400'
         else:
             self.req_data = httpRequestParser.parse(raw_data.decode())
-            # Route request
-            self.rsp_data = router.serve(cfg.WEB_ADDRESS, cfg.SERVER_ROOT_FOLDER, self.req_data)
+            # Route request if parsed path out
+            if self.req_data['path']: 
+                self.rsp_data = router.serve(cfg.WEB_ADDRESS, cfg.SERVER_ROOT_FOLDER, self.req_data)
+
             # Log result of serve
             if self.rsp_data['status_code'] != '400':
                 logging.info("%s %s %s %s %s %s %s",
@@ -89,9 +90,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     self.req_data.get('path', '-'), 
                     self.req_data.get('version', '-'), 
                     self.rsp_data.get('status_code', '-'), 
-                    self.req_data.get('Content-Length', '-'), 
+                    self.req_data.get('headers').get('Content-Length', '-'), 
                     self.req_ip, 
-                    self.req_data.get('User-Agent', '-'))
+                    self.req_data.get('headers').get('User-Agent', '-'))
         
         # Send response
         self.send_response()

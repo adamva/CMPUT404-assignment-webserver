@@ -21,16 +21,27 @@ def parse(raw_data):
         raw_data (string): A HTTP request string
 
     Returns:
-        httpRequest (dict): A dict containing the request line, headers, and message body
+        http_request (dict): A dict containing the request line, headers, and message body
     """
-    httpRequest = {}
+    http_request = {
+        'method': '',
+        'path': '',
+        'version': '',
+        'headers': {},
+        'message_body': ''
+    }
     split_data = raw_data.splitlines()
 
     # Parse the request line
-    request_line = split_data[0].split()
-    httpRequest["method"] = request_line[0]
-    httpRequest["path"] = request_line[1]
-    httpRequest["version"] = request_line[2]
+    try:
+        request_line = split_data[0].split()
+    except error as e:
+        logging.error("Could not parse raw request http status line")
+        return http_request
+    
+    http_request['method'] = request_line[0]
+    http_request['path'] = request_line[1]
+    http_request['version'] = request_line[2]
 
     # Parse the headers
     message_body_idx = 0
@@ -41,8 +52,8 @@ def parse(raw_data):
             break
         else: 
             header = split_data[i].split(': ')
-            httpRequest[header[0]] = header[1]
+            http_request['headers'][header[0]] = header[1]
     # Join message body back together
-    httpRequest['message_body'] = "\n".join(split_data[message_body_idx:len(split_data)])
-    return httpRequest
+    http_request['message_body'] = '\n'.join(split_data[message_body_idx:len(split_data)])
+    return http_request
     
