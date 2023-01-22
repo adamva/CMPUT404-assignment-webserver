@@ -1,6 +1,7 @@
 import logging
 import re
 import os.path
+from datetime import datetime
 
 # Copyright 2023 Adam Ahmed
 # 
@@ -15,6 +16,11 @@ import os.path
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+MIME_TYPES = {
+    'html': 'text/html; charset=utf-8',
+    'css': 'text/css; charset=utf-8'
+}
 
 def filter(string):
     found_match = re.search('[\[\]<>\{\}|\\^ ]', string)
@@ -55,12 +61,18 @@ def get_content(root_folder, path):
         req_file_content = open(req_file_path).read()
         http_code = '200'
     else:
-        req_file_content = open(root_folder+'/notfound.html').read()
+        req_file = root_folder+'/notfound.html'
+        req_file_content = open(req_file).read()
 
     return (http_code, req_file, req_file_content)
 
 def serve(web_addr, content_root_folder, req_data):
-    rsp_data = {'headers':{}}
+    rsp_data = {
+        'headers': {
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': '0'
+            }
+        }
     rsp_data['status_code'], rsp_data['path'] = route(req_data['path'])
     rsp_data['version'] = req_data.get('version', 'HTTP/1.0')
     rsp_data['message_body'] = ''
@@ -68,8 +80,13 @@ def serve(web_addr, content_root_folder, req_data):
     match rsp_data.get('status_code', '500'):
         case '200':
             rsp_data['status_code'], rsp_data['path'], rsp_data['message_body'] = get_content(content_root_folder, req_data['path'])
+            rsp_content_type = MIME_TYPES.get(rsp_data['path'].split('.')[-1], 'application/octet-stream')
+            rsp_content_length = str(len(rsp_data['message_body'].encode()))
+            rsp_data['headers']['Content-Type'] = rsp_content_type
+            rsp_data['headers']['Content-Length'] = rsp_content_length
         case '301':
             rsp_data['headers']['Location'] = web_addr + rsp_data['path']
+    rsp_data['headers']['date'] = datetime.utcnow().strftime('%a, %d %b %Y %T GMT')
     logging.debug(f'Response: {rsp_data}')
     return rsp_data
 
