@@ -14,8 +14,15 @@ import logging
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Parse a raw HTTP request data and return its headers and payload
 def parse(raw_data):
+    """ Parse a raw HTTP request data string and return its headers and payload
+    
+    Parameters:
+        raw_data (string): A HTTP request string
+
+    Returns:
+        httpRequest (dict): A dict containing the request line, headers, and message body
+    """
     httpRequest = {}
     split_data = raw_data.splitlines()
 
