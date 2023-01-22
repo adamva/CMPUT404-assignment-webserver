@@ -52,13 +52,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # print(self.rsp_data) # XX
         http_status_code = self.rsp_data['status_code']
         http_status_code_eng = HTTP_CODE[http_status_code]
-        # Construct response status line
+        # Construct status line
         http_rsp = b'' + self.rsp_data['version'].encode() + b' ' + http_status_code.encode() + b' ' + http_status_code_eng.encode() + b'\n'
-        # Construct response headers
+        # Construct headers
         for header in self.rsp_data['headers']:
             http_rsp += header.encode() + b' ' + self.rsp_data['headers'][header].encode() + b'\n'
         http_rsp += b'\n'
-        # Append response message body
+        # Append message body
         if self.rsp_data['message_body']:
             http_rsp += self.rsp_data['message_body'].encode()
             
@@ -81,8 +81,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else:
             self.req_data = httpRequestParser.parse(raw_data.decode())
             # Route request
-            self.rsp_data = router.serve(cfg.WEB_ADDRESS, self.req_data)
-            # Serve request
+            self.rsp_data = router.serve(cfg.WEB_ADDRESS, cfg.SERVER_ROOT_FOLDER, self.req_data)
             # Log result of serve
             if self.rsp_data['status_code'] != '400':
                 logging.info("%s %s %s %s %s %s %s",
