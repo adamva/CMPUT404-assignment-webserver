@@ -38,6 +38,9 @@ def route(path):
         return ('400', path)
     
     # Append path ending & redirect
+    # TODO Redirect works in curl/browser but unit test fails...
+    #   Found out that request.urlopen('https://www.google.com/foobar', None, 3) returns a code 200 regardless
+    #   even google says 200 but its definetly a 301
     if not path.endswith('/'):
         if not is_valid_file_type(path):
             return ('301', path+'/')
