@@ -80,24 +80,24 @@ def serve(web_addr, content_root_folder, req_data):
     rsp_data['version'] = req_data.get('version', 'HTTP/1.0')
     rsp_data['message_body'] = ''
 
-    match [rsp_data.get('status_code', '500'), req_data.get('method', 'GET')]:
-        case ['500', _]:
-            logging.debug('Issuing 500 Internal Server Error')
-        case ['400', _]:
-            logging.debug('Issuing 400 Bad Request')
-        case ['301', _]:
-            logging.debug('Issuing 301 Redirect to %s', rsp_data['path'])
-            rsp_data['headers']['location'] = web_addr + rsp_data['path']
-        case ['200', 'GET']:
-            rsp_data['status_code'], rsp_data['path'], rsp_data['message_body'] = get_content(content_root_folder, req_data['path'])
-            rsp_content_type = MIME_TYPES.get(rsp_data['path'].split('.')[-1], 'application/octet-stream')
-            rsp_content_length = str(len(rsp_data['message_body'].encode()))
-            rsp_data['headers']['Content-Type'] = rsp_content_type
-            rsp_data['headers']['Content-Length'] = rsp_content_length
-        # Deny methods other than GET
-        case [bad_status_code, bad_method]:
-            logging.debug('Issuing 405 Method Not Allowed for method %s', bad_method)
-            rsp_data['status_code'] = '405'
+    rsp_data_code = rsp_data.get('status_code', '500')
+    req_data_method = req_data.get('method', 'GET')
+    if rsp_data_code == '500':
+        logging.debug('Issuing 500 Internal Server Error')
+    elif rsp_data_code == '400':
+        logging.debug('Issuing 400 Bad Request')
+    elif rsp_data_code == '301':
+        logging.debug('Issuing 301 Redirect to %s', rsp_data['path'])
+        rsp_data['headers']['location'] = web_addr + rsp_data['path']
+    elif rsp_data_code == '200' and req_data_method == 'GET':
+        rsp_data['status_code'], rsp_data['path'], rsp_data['message_body'] = get_content(content_root_folder, req_data['path'])
+        rsp_content_type = MIME_TYPES.get(rsp_data['path'].split('.')[-1], 'application/octet-stream')
+        rsp_content_length = str(len(rsp_data['message_body'].encode()))
+        rsp_data['headers']['Content-Type'] = rsp_content_type
+        rsp_data['headers']['Content-Length'] = rsp_content_length
+    else: # Deny methods other than GET
+        logging.debug('Issuing 405 Method Not Allowed for method %s', req_data_method)
+        rsp_data['status_code'] = '405'
 
     rsp_data['headers']['date'] = datetime.utcnow().strftime('%a, %d %b %Y %T GMT')
     logging.debug(f'Response: {rsp_data}')
