@@ -23,7 +23,7 @@ LOG_DATEFMT = '%Y-%m-%dT%H:%M:%S'
 LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
 
 # Webserver
-BIND_HOST = 'localhost'
+BIND_HOST = '127.0.0.1' # 'localhost'
 BIND_PORT = 8080
 WEB_SCHEME = 'http'
 WEB_ADDRESS = f'{WEB_SCHEME}://{BIND_HOST}:{BIND_PORT}'
