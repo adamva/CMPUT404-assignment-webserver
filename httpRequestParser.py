@@ -31,10 +31,11 @@ def parse(raw_data):
         'message_body': ''
     }
     split_data = raw_data.splitlines()
-
+    logging.debug("Got split_data: %s", split_data)
     # Parse the request line
     try:
         request_line = split_data[0].split()
+        logging.debug("Got request_line: %s", request_line)
     except error as e:
         logging.error("Could not parse raw request http status line")
         return http_request
@@ -44,16 +45,20 @@ def parse(raw_data):
     http_request['version'] = request_line[2]
 
     # Parse the headers
-    message_body_idx = 0
+    message_body_idx = -1
     for i in range(1, len(split_data)):
         # Stop reading headers when message body reached
         if split_data[i] == '':
             message_body_idx = i + 1
             break
-        else: 
-            header = split_data[i].split(': ')
-            http_request['headers'][header[0]] = header[1]
-    # Join message body back together
-    http_request['message_body'] = '\n'.join(split_data[message_body_idx:len(split_data)])
+        header = split_data[i].split(': ')
+        http_request['headers'][header[0]] = header[1]
+
+    # Join message body back together if it exists
+    if message_body_idx != -1:
+        http_request['message_body'] = '\n'.join(split_data[message_body_idx:])
+        logging.debug("Got a message_body: %s", http_request['message_body'])
+    
+    logging.debug("Returning http_request data: %s", http_request)
     return http_request
     
