@@ -36,8 +36,8 @@ def parse(raw_data):
     try:
         request_line = split_data[0].split()
         logging.debug("Got request_line: %s", request_line)
-    except error as e:
-        logging.error("Could not parse raw request http status line")
+    except Exception as e:
+        logging.error("Could not parse raw request http status line %s", e)
         return http_request
     
     http_request['method'] = request_line[0]

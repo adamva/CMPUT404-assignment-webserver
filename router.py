@@ -67,12 +67,14 @@ def route(path):
 def get_content(root_folder, path):
     http_code = '404'
     req_file_content = ''
-    
+    not_found_file = root_folder+'/notfound.html'
+
     req_file = path+'index.html' if path.endswith('/') else path
     # Bounce invalid file types
     if not is_valid_file_type(req_file):
-        req_file_content = get_file_content(root_folder+'/notfound.html')
-        return (http_code, req_file, req_file_content)
+        logging.error("Invalid file type from request path %s", req_file)
+        req_file_content = get_file_content(not_found_file)
+        return (http_code, not_found_file, req_file_content)
     
     # Try to find the file before reading
     req_file_path = root_folder+req_file
@@ -81,7 +83,9 @@ def get_content(root_folder, path):
         logging.debug(f'Getting content for {req_file_path}')
         http_code = '200'
     else:
-        req_file_content = get_file_content(root_folder+'/notfound.html')
+        logging.error("Could not find file from request path %s", req_file)
+        req_file = not_found_file
+        req_file_content = get_file_content(not_found_file)
 
     return (http_code, req_file, req_file_content)
 

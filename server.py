@@ -60,7 +60,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # Append message body
         if self.rsp_data['message_body']:
             http_rsp += self.rsp_data['message_body'].encode()
-            
+        
+        logging.debug("Returning HTTP response %s", http_rsp)
         self.request.sendall(http_rsp)
 
     def handle(self):
