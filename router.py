@@ -22,20 +22,20 @@ MIME_TYPES = {
     'css': 'text/css; charset=utf-8'
 }
 
-def filter(string):
-    found_match = re.search('[\[\]<>\{\}|\\^ ]', string)
-    return True if found_match else False
-
 def is_valid_file_type(filename):
     valid_file_extensions = ('.html', '.css')
     return True if filename.endswith(valid_file_extensions) else False
 
 def route(path):
     http_code = '400'
-    # Deny bad paths
-    if filter(path):
+    # Deny bad chars in path
+    if re.search('[\[\]<>\{\}|\\^ ]', path):
         logging.error('Malformed request path received')
         return ('400', path)
+    # Deny traversal attempts
+    if path.find('/../..') != -1:
+        logging.error('Request was a traversal attempt')
+        return ('404', path)
     
     # Append path ending & redirect
     if not path.endswith('/'):
@@ -86,6 +86,8 @@ def serve(web_addr, content_root_folder, req_data):
         logging.debug('Issuing 500 Internal Server Error')
     elif rsp_data_code == '400':
         logging.debug('Issuing 400 Bad Request')
+    elif rsp_data_code == '404':
+        logging.debug('Issuing 404 Not Found')
     elif rsp_data_code == '301':
         logging.debug('Issuing 301 Redirect to %s', rsp_data['path'])
         rsp_data['headers']['location'] = web_addr + rsp_data['path']
