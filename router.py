@@ -22,9 +22,20 @@ MIME_TYPES = {
     'css': 'text/css; charset=utf-8'
 }
 
-def is_valid_file_type(filename):
+def is_valid_file_type(file_name):
     valid_file_extensions = ('.html', '.css')
-    return True if filename.endswith(valid_file_extensions) else False
+    return True if file_name.endswith(valid_file_extensions) else False
+
+def get_file_content(file_path):
+    file_content = ''
+    try:
+        f = open(file_path)
+        file_content = f.read()
+    except Exception as e:
+        logging.error("Could not load file content from file: %s", file_path)
+    finally:
+        f.close()
+    return file_content
 
 def route(path):
     http_code = '400'
@@ -37,7 +48,7 @@ def route(path):
         logging.error('Request was a traversal attempt')
         return ('404', path)
     
-    # Append path ending & redirect
+    # Append missing path ending & redirect
     if not path.endswith('/'):
         # Ignore paths ending in file with extentions
         base_name = path.split('/')[-1]
@@ -58,14 +69,19 @@ def get_content(root_folder, path):
     req_file_content = ''
     
     req_file = path+'index.html' if path.endswith('/') else path
+    # Bounce invalid file types
+    if not is_valid_file_type(req_file):
+        req_file_content = get_file_content(root_folder+'/notfound.html')
+        return (http_code, req_file, req_file_content)
+    
+    # Try to find the file before reading
     req_file_path = root_folder+req_file
     if os.path.isfile(req_file_path):
+        req_file_content = get_file_content(req_file_path)
         logging.debug(f'Getting content for {req_file_path}')
-        req_file_content = open(req_file_path).read()
         http_code = '200'
     else:
-        req_file = root_folder+'/notfound.html'
-        req_file_content = open(req_file).read()
+        req_file_content = get_file_content(root_folder+'/notfound.html')
 
     return (http_code, req_file, req_file_content)
 
